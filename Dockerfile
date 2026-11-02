@@ -1,3 +1,7 @@
+FROM python:3.13-slim AS python-reference
+USER 65534:65534
+WORKDIR /tmp
+
 FROM debian:bookworm-slim AS rust-validator
 RUN apt-get update && apt-get install -y --no-install-recommends rustc \
     && rm -rf /var/lib/apt/lists/*

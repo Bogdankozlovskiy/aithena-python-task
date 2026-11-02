@@ -16,12 +16,14 @@ from typing import Any
 
 from dotenv import load_dotenv
 
+from evals.differential import SEED, differential_assertions
 from solution import llm as llm_module
 from solution.errors import safe_error
 from solution.licensing import normalize_license
 from solution.llm import LLMAnalyzer
 from solution.models import Analysis
 from solution.pipeline import atomic_write
+from solution.prompts import CURRENT_VERSION, load_current_prompt
 from solution.source_validation import extract_functions
 
 ROOT = Path(__file__).resolve().parent
@@ -55,7 +57,12 @@ def rust_test(code: str, assertions: str) -> dict[str, Any]:
                 "aithena-rust-validator:local",
                 "sh",
                 "-c",
-                "cat > /tmp/test.rs && rustc --edition=2021 --test /tmp/test.rs -o /tmp/check && /tmp/check",
+                "cat > /tmp/test.rs && "
+                "rustc --edition=2021 --test /tmp/test.rs -o /tmp/check "
+                "> /tmp/compiler-log 2>&1 && "
+                "(ulimit -f 128; /tmp/check > /tmp/runtime-log 2>&1); status=$?; "
+                "tail -c 2000 /tmp/compiler-log; "
+                'tail -c 2000 /tmp/runtime-log 2>/dev/null; exit "$status"',
             ],
             input=code + harness,
             text=True,
@@ -64,7 +71,8 @@ def rust_test(code: str, assertions: str) -> dict[str, Any]:
             check=False,
         )
         return {
-            "passed": result.returncode == 0,
+            "passed": result.returncode == 0
+            and "test result: ok. 1 passed; 0 failed;" in result.stdout,
             "diagnostic": (result.stdout + result.stderr)[-4000:],
         }
     finally:
@@ -104,7 +112,9 @@ def evaluate(
             code = backend.translate(case["id"] + ".py", case["source"]).code
             row["code"] = code
             row["code_sha256"] = hashlib.sha256(code.encode()).hexdigest()
-            row.update(rust_test(code, case["tests"]))
+            assertions, count = differential_assertions(case)
+            row["differential_checks"] = count
+            row.update(rust_test(code, case["tests"] + "\n" + assertions))
             row["license_preserved"] = all(
                 line[1:].strip() in code
                 for line in case["source"].splitlines()
@@ -131,6 +141,7 @@ def summarize(rows: list[dict[str, Any]], kind: str) -> dict[str, Any]:
     return {
         "passed": sum(row["passed"] for row in rows),
         "total": len(rows),
+        "differential_checks": sum(row.get("differential_checks", 0) for row in rows),
         "exactly_repeatable_cases": sum(
             None not in v and len(set(v)) == 1 for v in eligible.values()
         ),
@@ -145,7 +156,10 @@ def summarize(rows: list[dict[str, Any]], kind: str) -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--env-file", type=Path, default=Path(".env"))
-    parser.add_argument("--prompt-version", choices=["v1", "v2", "v3"], default="v3")
+    parser.add_argument(
+        "--prompt-version", choices=["current", "v1", "v2", "v3"], default="current"
+    )
+    parser.add_argument("--security", action="store_true", help="Run adversarial analysis cases")
     parser.add_argument("--kind", choices=["analysis", "translation"], default="analysis")
     parser.add_argument("--split", choices=["dev", "holdout", "all"], default="dev")
     parser.add_argument("--repeats", type=int, default=3)
@@ -159,16 +173,27 @@ def main() -> int:
         parser.error("repeats must be 1..10; workers 1..4")
     load_dotenv(args.env_file, override=False)
     model = os.environ["LLM_MODEL"]
-    prompts = json.loads((ROOT / ("prompts-" + args.prompt_version + ".json")).read_text())
+    if args.security and args.kind != "analysis":
+        parser.error("--security requires --kind analysis")
+    version = CURRENT_VERSION if args.prompt_version == "current" else args.prompt_version
+    prompts = (
+        load_current_prompt()
+        if version == CURRENT_VERSION
+        else json.loads((ROOT / ("prompts-" + version + ".json")).read_text())
+    )
     llm_module.SYSTEM = prompts["system"]
     llm_module.ANALYZE = prompts["analyze"]
     llm_module.TRANSLATE = prompts["translate"]
-    llm_module.PROMPT_VERSION = args.prompt_version
-    dataset = json.loads((ROOT / (args.kind + ".json")).read_text())
+    llm_module.PROMPT_VERSION = version
+    dataset_path = ROOT / ("security.json" if args.security else args.kind + ".json")
+    dataset = json.loads(dataset_path.read_text())
     cases = [
         c
         for c in dataset["cases"]
-        if args.kind == "translation" or args.split == "all" or c["split"] == args.split
+        if args.security
+        or args.kind == "translation"
+        or args.split == "all"
+        or c["split"] == args.split
     ]
     if args.kind == "analysis":
         for case in cases:
@@ -183,14 +208,20 @@ def main() -> int:
         "model": model,
         "settings": args.settings,
         "kind": args.kind,
-        "split": args.split,
-        "prompt_version": args.prompt_version,
+        "split": "security" if args.security else args.split,
+        "prompt_version": version,
         "prompt_sha256": hashlib.sha256(
             (
                 prompts["system"] + prompts["analyze" if args.kind == "analysis" else "translate"]
             ).encode()
         ).hexdigest(),
-        "dataset_sha256": hashlib.sha256((ROOT / (args.kind + ".json")).read_bytes()).hexdigest(),
+        "dataset_sha256": hashlib.sha256(dataset_path.read_bytes()).hexdigest(),
+        "differential_seed": SEED if args.kind == "translation" else None,
+        "differential_runner_sha256": (
+            hashlib.sha256((ROOT / "differential.py").read_bytes()).hexdigest()
+            if args.kind == "translation"
+            else None
+        ),
         "prompts": {
             "system": prompts["system"],
             "task": prompts["analyze" if args.kind == "analysis" else "translate"],

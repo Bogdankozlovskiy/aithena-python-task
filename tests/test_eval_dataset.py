@@ -36,7 +36,8 @@ def test_eval_failure_is_not_reported_as_repeatable():
     assert summarize(rows, "analysis")["exactly_repeatable_cases"] == 0
 
 
-def test_eval_cli_replays_frozen_prompt_without_network(monkeypatch, tmp_path):
+@pytest.mark.parametrize("version", ["v1", "current"])
+def test_eval_cli_replays_frozen_prompt_without_network(monkeypatch, tmp_path, version):
     from evals import run
     from solution import llm
 
@@ -50,7 +51,7 @@ def test_eval_cli_replays_frozen_prompt_without_network(monkeypatch, tmp_path):
         [
             "evals",
             "--prompt-version",
-            "v1",
+            version,
             "--settings",
             "baseline",
             "--repeats",
@@ -63,7 +64,7 @@ def test_eval_cli_replays_frozen_prompt_without_network(monkeypatch, tmp_path):
     )
 
     def fake_evaluate(case, repeat, model, kind, settings):
-        assert llm.PROMPT_VERSION == "v1"
+        assert llm.PROMPT_VERSION == ("v3" if version == "current" else "v1")
         assert settings == "baseline"
         return {
             "case": case["id"],
@@ -77,11 +78,16 @@ def test_eval_cli_replays_frozen_prompt_without_network(monkeypatch, tmp_path):
     assert run.main() == 0
     report = json.loads(output.read_text())
     assert report["summary"]["total"] == 20
-    assert report["prompt_version"] == "v1"
-    assert (
-        report["prompts"]["system"]
-        == json.loads((run.ROOT / "prompts-v1.json").read_text())["system"]
+    assert report["prompt_version"] == ("v3" if version == "current" else "v1")
+    expected_prompts = (
+        run.load_current_prompt()
+        if version == "current"
+        else json.loads((run.ROOT / "prompts-v1.json").read_text())
     )
+    assert report["prompts"] == {
+        "system": expected_prompts["system"],
+        "task": expected_prompts["analyze"],
+    }
 
 
 def test_eval_cli_rejects_unbounded_repeats(monkeypatch, tmp_path):
@@ -93,3 +99,25 @@ def test_eval_cli_rejects_unbounded_repeats(monkeypatch, tmp_path):
     with pytest.raises(SystemExit) as exc:
         run.main()
     assert exc.value.code == 2
+
+
+def test_current_prompt_is_shared_and_packaged():
+    from solution import llm
+    from solution.prompts import CURRENT_VERSION, load_current_prompt
+
+    prompts = load_current_prompt()
+    assert llm.PROMPT_VERSION == CURRENT_VERSION
+    assert (llm.SYSTEM, llm.ANALYZE, llm.TRANSLATE) == tuple(
+        prompts[key] for key in ("system", "analyze", "translate")
+    )
+    assert not (Path(__file__).parents[1] / f"evals/prompts-{CURRENT_VERSION}.json").exists()
+
+
+@pytest.mark.parametrize(
+    "case",
+    json.loads((Path(__file__).parents[1] / "evals/security.json").read_text())["cases"],
+    ids=lambda c: c["id"],
+)
+def test_security_gold_matches_independent_parser(case):
+    expected = Analysis.model_validate(case["expected"])
+    assert extract_functions(case["source"], expected.language) == expected.functions
