@@ -30,6 +30,8 @@ def normalize_license(analysis: Analysis) -> Analysis:
         name = ALIASES.get(name.strip().lower(), name.strip())
     name = name or None
     expected = CATEGORIES.get(name or "")
-    if expected and analysis.license_category not in {expected, "unknown"}:
+    if expected is None:
+        return analysis.model_copy(update={"license_name": name, "license_category": "unknown"})
+    if analysis.license_category not in {expected, "unknown"}:
         raise ValueError("License category disagrees with the known SPDX identifier")
     return analysis.model_copy(update={"license_name": name})

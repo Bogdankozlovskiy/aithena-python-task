@@ -14,7 +14,7 @@ from .errors import safe_error
 from .licensing import normalize_license
 from .llm import Analyzer
 from .models import Analysis, Result, RustSource
-from .source_validation import extract_functions
+from .source_validation import detect_functions
 
 MAX_SOURCE_BYTES = 1_000_000
 
@@ -96,13 +96,15 @@ def process_directory(
             )
             result.analysis = analysis
             if verify_functions:
-                parsed = extract_functions(source, analysis.language)
+                parsed = detect_functions(source)
                 if parsed is not None:
                     if parsed != analysis.functions:
                         raise ValueError("LLM function extraction disagrees with source parser")
                     result.functions_validation = "passed"
                 else:
                     result.functions_validation = "unsupported"
+                    result.status = "unsupported"
+                    raise ValueError("Source syntax cannot be independently verified")
             if analysis.license_category == "unknown" or analysis.license_name is None:
                 result.status = "unsupported"
                 result.error = "License is missing, unsupported or ambiguous"
