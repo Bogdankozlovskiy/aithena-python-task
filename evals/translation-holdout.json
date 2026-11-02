@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "provenance": "Synthetic examples authored and frozen before first model evaluation; not externally sourced and not independently human-reviewed. No prompt tuning on this set.",
+  "cases": [
+    {
+      "id": "holdout_gcd",
+      "source": "# SPDX-License-Identifier: GPL-3.0-only\n# Copyright (c) 2026 Evaluation Authors\ndef gcd(a: int, b: int) -> int:\n    a, b = abs(a), abs(b)\n    while b:\n        a, b = b, a % b\n    return a\n",
+      "tests": "assert_eq!(gcd(-12,18),6); assert_eq!(gcd(0,0),0);"
+    },
+    {
+      "id": "holdout_factorial",
+      "source": "# SPDX-License-Identifier: GPL-3.0-only\n# Copyright (c) 2026 Evaluation Authors\ndef factorial(n: int) -> int:\n    result = 1\n    for k in range(2, n + 1):\n        result *= k\n    return result\n",
+      "tests": "assert_eq!(factorial(0),1); assert_eq!(factorial(5),120);"
+    },
+    {
+      "id": "holdout_sign",
+      "source": "# SPDX-License-Identifier: GPL-3.0-only\n# Copyright (c) 2026 Evaluation Authors\ndef sign(n: int) -> int:\n    if n > 0:\n        return 1\n    if n < 0:\n        return -1\n    return 0\n",
+      "tests": "assert_eq!(sign(-1),-1); assert_eq!(sign(0),0); assert_eq!(sign(1),1);"
+    }
+  ]
+}
