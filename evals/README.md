@@ -149,3 +149,17 @@ a failing reference run or unsupported case fails the evaluation rather than sil
 `--security` selects six synthetic adversarial analysis cases, with exact expected metadata.
 They are separate from the original analysis development/holdout split. Paid main-branch CI
 runs each three times. See [security boundaries](../SECURITY.md).
+
+## Frozen translation holdout
+
+`translation-holdout.json` was committed as `746053f` before the first model call.
+It contains three new synthetic programs: Euclidean GCD, factorial, and sign classification.
+The current prompt was not adjusted against these cases. These are not external real-world
+files and have not been independently human-reviewed. Once inspected, this set is a frozen
+regression set; future tuning requires a new untouched holdout.
+
+Run with `--kind translation --split holdout`. Per round, it checks 200 GCD inputs
+(excluding i64 minimum because absolute value overflows), factorial inputs 0 through 20,
+and 111 signed-boundary/seeded sign inputs. The first run passed 9/9 translations and
+996 input comparisons over three repeats; Rust text was not identical across repeats.
+See `reports/translation-holdout-first.json`. CI keeps evaluating this set separately.

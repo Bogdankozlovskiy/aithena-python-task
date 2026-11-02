@@ -27,10 +27,19 @@ def main() -> int:
     parser.add_argument("--output", type=Path, default=Path("outputs"))
     parser.add_argument("--model", default=os.getenv("LLM_MODEL"))
     parser.add_argument("--timeout", type=float, default=60)
-    parser.add_argument("--rust-backend", choices=["docker", "local"], default="docker")
+    parser.add_argument("--rust-backend", choices=["docker", "local"], default=None)
     parser.add_argument("--rust-image", default="aithena-rust-validator:local")
     parser.add_argument("--skip-rust-check", action="store_true")
     args = parser.parse_args()
+    if os.getenv("AITHENA_CONTAINER") == "1" and not args.skip_rust_check:
+        if args.rust_backend != "local":
+            parser.error(
+                "The application image cannot launch a separate Docker sandbox. "
+                "For trusted inputs explicitly use --rust-backend local; "
+                "otherwise run the host CLI with the isolated Docker backend. "
+                "--skip-rust-check saves unverified output."
+            )
+    args.rust_backend = args.rust_backend or "docker"
     if not args.model or not args.model.strip():
         parser.error("Set LLM_MODEL or pass --model (must support structured output)")
     if not os.getenv("OPENAI_API_KEY", "").strip():

@@ -11,6 +11,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from .errors import safe_error
+from .input_safety import reject_credentials
 from .licensing import normalize_license
 from .llm import Analyzer
 from .models import Analysis, Result, RustSource
@@ -83,6 +84,11 @@ def process_directory(
         relative = path.relative_to(input_dir).as_posix()
         result = Result(path=relative, status="error")
         try:
+            try:
+                reject_credentials(relative)
+            except ValueError:
+                result.path = "[redacted filename]"
+                raise
             if path.is_symlink() or not path.resolve().is_relative_to(input_dir):
                 raise ValueError("Symbolic links are not supported")
             with path.open("rb") as stream:
@@ -90,6 +96,7 @@ def process_directory(
             if len(raw) > MAX_SOURCE_BYTES:
                 raise ValueError(f"Source exceeds {MAX_SOURCE_BYTES} bytes")
             source = raw.decode("utf-8-sig")
+            reject_credentials(source)
             result.source_sha256 = hashlib.sha256(raw).hexdigest()
             analysis = normalize_license(
                 Analysis.model_validate(analyzer.analyze(relative, source))
