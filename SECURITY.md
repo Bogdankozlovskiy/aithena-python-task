@@ -73,3 +73,16 @@ encoded secret, or confidential document. It is not permission to submit sensiti
 The application image requires an explicit local-compiler choice for trusted input, or
 an explicit request to skip validation. It never silently falls back from an unavailable
 Docker sandbox to compilation in the API client's environment.
+
+## Fixed-window credential-label redaction
+
+After rejection checks on the original source, the API adapter replaces up to 15 value
+characters after case-insensitive credential labels followed by `=` or `:` with `[REDACTED]`.
+Labels include login, username, user, PWD, password, passwd, passphrase, pass, API key,
+access token, token, client secret, secret, and the Russian words for login and password.
+Spaces after the separator and an opening quote are preserved; redaction stops at a quote
+or line break. The source file on disk is unchanged. The rule is documented beside its regex.
+
+This requested 15-character window may leave a longer value's suffix visible and may change
+source semantics. It is not a substitute for complete secret removal. Existing recognizable-key
+and long quoted credential-assignment checks still reject the original input before redaction.

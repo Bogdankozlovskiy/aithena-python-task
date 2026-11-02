@@ -97,3 +97,71 @@ def test_direct_adapter_also_blocks_credentials(field):
     with pytest.raises(ValueError, match="not sent"):
         backend.analyze(**arguments)
     backend.model.with_structured_output.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "label",
+    [
+        "login",
+        "LOGIN",
+        "Login",
+        "PWD",
+        "passwd",
+        "password",
+        "username",
+        "token",
+        "\u043f\u0430\u0440\u043e\u043b\u044c",
+        "\u041f\u0410\u0420\u041e\u041b\u042c",
+        "\u043b\u043e\u0433\u0438\u043d",
+    ],
+)
+@pytest.mark.parametrize("separator", ["=", ":"])
+def test_trigger_redacts_fifteen_value_characters(label, separator):
+    from solution.input_safety import redact_trigger_values
+
+    text = f'{label} {separator} "123456789012345TAIL"\nnext'
+    expected = f'{label} {separator} "[REDACTED]TAIL"\nnext'
+    assert redact_trigger_values(text) == expected
+
+
+@pytest.mark.parametrize(
+    "text,expected",
+    [
+        ("PWD=short\nnext", "PWD=[REDACTED]\nnext"),
+        ("login: 'abc'\nPWD=xyz", "login: '[REDACTED]'\nPWD=[REDACTED]"),
+        ("login\nvalue", "login\nvalue"),
+        ("notlogin=abc", "notlogin=abc"),
+        ("login=\nnext", "login=\nnext"),
+        ('login=""', 'login=""'),
+    ],
+)
+def test_trigger_boundaries(text, expected):
+    from solution.input_safety import redact_trigger_values
+
+    assert redact_trigger_values(text) == expected
+
+
+def test_trigger_redaction_reaches_api_messages():
+    import json
+
+    from solution.llm import LLMAnalyzer
+    from solution.models import Analysis
+
+    backend = object.__new__(LLMAnalyzer)
+    backend.model = Mock()
+    backend.model_name = "test-model"
+    backend.max_calls = 1
+    backend.calls = []
+    expected = Analysis(
+        language="Python",
+        copyright_holders=[],
+        license_name="MIT",
+        license_category="permissive",
+        functions=[],
+    )
+    chain = backend.model.with_structured_output.return_value
+    chain.invoke.return_value = {"parsed": expected, "raw": Mock(usage_metadata={})}
+    backend.analyze("sample.py", "# LOGIN: 123456789012345\npass")
+    envelope = json.loads(chain.invoke.call_args.args[0][1][1])
+    assert envelope["source"] == "# LOGIN: [REDACTED]\npass"
+    assert "123456789012345" not in str(chain.invoke.call_args)
