@@ -234,10 +234,10 @@ def test_byte_limit_boundary(dirs, backend, monkeypatch, size, ok):
 def test_utf8_bom_and_unicode_paths(dirs, backend):
     source, output = dirs
     (source / "file.py").unlink()
-    (source / "пример.py").write_text("# café\n", encoding="utf-8-sig")
+    (source / "caf\u00e9.py").write_text("# café\n", encoding="utf-8-sig")
     (result,) = process_directory(source, output, backend, verify_functions=True)
     assert result.status == "ok"
-    assert result.path == "пример.py"
+    assert result.path == "caf\u00e9.py"
     assert backend.analyze.call_args.args[1] == "# café\n"
     assert len(result.source_sha256) == 64
 
