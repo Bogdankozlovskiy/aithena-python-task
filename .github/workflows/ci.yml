@@ -149,7 +149,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           LLM_MODEL: gpt-5.4-mini-2026-03-17
         run: >-
-          uv run python -m evals.run --prompt-version v2 --settings temperature-zero
+          uv run python -m evals.run --prompt-version v3 --settings temperature-zero
           --split all --repeats 3 --workers 3 --output ci-results/analysis.json
       - name: Rust behavior dataset (5 cases x 3 repeats)
         if: ${{ !cancelled() }}
@@ -157,7 +157,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           LLM_MODEL: gpt-5.4-mini-2026-03-17
         run: >-
-          uv run python -m evals.run --prompt-version v2 --settings temperature-zero
+          uv run python -m evals.run --prompt-version v3 --settings temperature-zero
           --kind translation --repeats 3 --workers 3 --output ci-results/translation.json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()

@@ -119,3 +119,12 @@ https://developers.openai.com/api/docs/guides/evaluation-best-practices
 
 После прогонов уточнено только описание происхождения dataset; кейсы и эталоны не менялись.
 В отчётах сохранён исходный `dataset_sha256_at_run`, новый hash и пояснение изменения метаданных.
+
+## Follow-up: GitHub CI and prompt v3
+
+The first full GitHub run exposed an additional v2 failure: analysis 90/90, translation
+14/15. The negative-division regression returned. The failed reports are preserved as
+`reports/github-v2-analysis.json` and `reports/github-v2-translation.json`.
+Prompt v3 keeps the analysis instructions unchanged and adds the explicit signed
+quotient/remainder correction algorithm to translation. The runtime and CI use v3.
+Earlier v1/v2 scores above describe historical experiments, not a guarantee.

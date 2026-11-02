@@ -234,3 +234,8 @@ repository with HTTP 403 (GitHub Pro or public visibility required). The workflo
 and reports failures, but GitHub does not currently block merges on failed checks.
 After upgrading, require the `CI required` check on `main` with up-to-date branches.
 The repository remains private.
+
+Latest prompt revision: **v3**, after GitHub CI caught a recurring negative-integer
+division error in v2. Analysis instructions are unchanged; translation now includes
+the explicit quotient/remainder correction algorithm. Failed v2 CI reports are preserved
+in `evals/reports/github-v2-*.json`. Use `--prompt-version v3` for current evaluations.

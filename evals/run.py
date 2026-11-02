@@ -145,7 +145,7 @@ def summarize(rows: list[dict[str, Any]], kind: str) -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--env-file", type=Path, default=Path(".env"))
-    parser.add_argument("--prompt-version", choices=["v1", "v2"], default="v2")
+    parser.add_argument("--prompt-version", choices=["v1", "v2", "v3"], default="v3")
     parser.add_argument("--kind", choices=["analysis", "translation"], default="analysis")
     parser.add_argument("--split", choices=["dev", "holdout", "all"], default="dev")
     parser.add_argument("--repeats", type=int, default=3)
