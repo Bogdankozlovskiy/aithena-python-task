@@ -8,7 +8,8 @@ from solution.llm import LLMAnalyzer
 from solution.models import Analysis
 
 
-def test_structured_output_retry_and_data_envelope():
+def test_structured_output_retry_and_data_envelope(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-transport-secret-canary")
     backend = object.__new__(LLMAnalyzer)
     backend.model = Mock()
     backend.model_name = "test-model"
@@ -43,6 +44,10 @@ def test_structured_output_retry_and_data_envelope():
     assert backend.calls[-1]["status"] == "ok"
     messages = chain.invoke.call_args.args[0]
     assert messages[0][0] == "system"
+    assert source not in messages[0][1]
+    assert "test-transport-secret-canary" not in str(messages)
+    assert messages[1][0] == "human"
+    backend.model.bind_tools.assert_not_called()
     assert json.loads(messages[1][1]) == {"path": "3.py", "source": source}
 
 

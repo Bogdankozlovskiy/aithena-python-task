@@ -59,7 +59,8 @@ but identical Rust text for only 3/5 cases, despite all behavior checks passing.
    algorithm. Failed reports remain in `reports/github-v2-*.json`.
 
 The runtime and CI use **v3**, `temperature=0`, and `reasoning_effort=none`.
-`prompts-v1.json`, `prompts-v2.json`, and `prompts-v3.json` preserve the compared prompts.
+`prompts-v1.json` and `prompts-v2.json` preserve historical instructions.
+The current prompt lives only in `solution/prompts-v3.json`, shared with production.
 Historical scores do not guarantee future results.
 
 ## Reproduction (paid API calls)
@@ -69,11 +70,12 @@ Run from the project root using Python 3.13. Keep credentials outside reports:
 ```bash
 uv sync --frozen --python 3.13
 docker build --target rust-validator -t aithena-rust-validator:local .
+docker build --target python-reference -t aithena-python-reference:local .
 uv run python -m evals.run --env-file /path/to/private.env \
-  --prompt-version v3 --settings temperature-zero --split all --repeats 3 \
+  --prompt-version current --settings temperature-zero --split all --repeats 3 \
   --output evals/reports/my-analysis.json
 uv run python -m evals.run --env-file /path/to/private.env \
-  --prompt-version v3 --settings temperature-zero --kind translation --repeats 3 \
+  --prompt-version current --settings temperature-zero --kind translation --repeats 3 \
   --output evals/reports/my-translation.json
 ```
 
@@ -124,3 +126,26 @@ See also [evaluation guidance](https://developers.openai.com/api/docs/guides/eva
 Dataset provenance descriptions were clarified after the initial runs; cases and expected
 answers were unchanged. Reports retain `dataset_sha256_at_run`, the updated hash, and an
 explanation of the metadata-only change.
+
+
+## Differential Python/Rust checks
+
+Each newly generated translation is also tested against results obtained by running the
+original fixture on Python 3.13 in an isolated container. Inputs combine explicit signed-i64
+boundaries with 100 pseudorandom samples using seed 20261102. Counts per round: add 167,
+division/remainder 440, clamp 333, range sum 107, absolute value 110 (1,157 total).
+
+The supported domain excludes addition overflow, absolute value of i64 minimum, and
+minimum divided by -1 (including remainder, whose Rust intermediate quotient overflows).
+Range inputs are capped at 1,000 for execution time; negative inputs include i64 minimum.
+Clamp tests use ordered bounds. Division by zero is checked as Python ZeroDivisionError
+versus Rust panic, not as identical exception types. This is a bounded equivalence check,
+not proof of full Python semantics. The model never receives the test inputs or outputs.
+
+Reports record the input-generation seed, runner hash, dataset hash, and number of comparisons.
+Offline Docker CI tests both correct hand-authored Rust and deliberately wrong translations;
+a failing reference run or unsupported case fails the evaluation rather than silently skipping it.
+
+`--security` selects six synthetic adversarial analysis cases, with exact expected metadata.
+They are separate from the original analysis development/holdout split. Paid main-branch CI
+runs each three times. See [security boundaries](../SECURITY.md).

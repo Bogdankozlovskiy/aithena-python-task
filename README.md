@@ -176,7 +176,7 @@ of deterministic correctness. See [evaluation methodology](evals/README.md).
 
 ## GitHub Actions
 
-The [repository](https://github.com/Bogdankozlovskiy/aithena-python-task) is private.
+The [repository](https://github.com/Bogdankozlovskiy/aithena-python-task) is public.
 
 - Pull requests and merge queues run Ruff lint/format, mypy, Flake8, Bandit,
   Python 3.13 tests, coverage gates, Docker builds, and interpreter-version assertions.
@@ -191,9 +191,36 @@ The [repository](https://github.com/Bogdankozlovskiy/aithena-python-task) is pri
   Bandit checks runtime and evaluation scripts, with narrowly scoped, documented
   subprocess suppressions for explicit argument lists and isolated generated code.
 
-GitHub rejected required-check branch protection for this private repository with HTTP 403:
-GitHub Pro or public visibility is required. Workflows report failures, but merges are
-not currently blocked. After upgrading, require `CI required` on `main` with up-to-date branches.
+The `main` branch requires pull requests and a successful `CI required` check, including
+up-to-date branches. Protection applies to administrators; force pushes and branch deletion
+are disabled.
+
+## Shared prompt and differential verification
+
+`solution/prompts-v3.json` is the single source of the current system, analysis, and
+translation instructions. Both production and `evals.run --prompt-version current`
+load it through `solution.prompts`; CI uses `current`. Historical v1/v2 snapshots remain
+under `evals/` only for explicit replay. The current JSON ships inside the Python wheel.
+
+Translation evaluations now compare generated Rust against actual Python 3.13 results.
+Five programs receive 1,157 deterministic boundary/seeded input checks per evaluation
+round (3,471 over three repeats), in addition to the original assertions. Python references
+and generated Rust run in separate isolated containers. Division by zero must raise/panic;
+values or intermediate results outside signed i64 are excluded. Deliberately incorrect
+Rust implementations verify that the comparison detects semantic errors.
+
+```bash
+docker build --target python-reference -t aithena-python-reference:local .
+docker build --target rust-validator -t aithena-rust-validator:local .
+RUN_SANDBOX_TESTS=1 uv run python -m pytest tests/test_differential.py -q
+uv run python -m evals.run --env-file /path/to/private.env --kind translation \
+  --prompt-version current --repeats 3 --output ci-results/translation.json
+uv run python -m evals.run --env-file /path/to/private.env --security \
+  --repeats 3 --output ci-results/security.json
+```
+
+Read [SECURITY.md](SECURITY.md) for prompt-injection defenses, container boundaries,
+security regression cases, and remaining risks.
 
 LangChain API reference:
 [ChatOpenAI.with_structured_output](https://reference.langchain.com/python/langchain-openai/chat_models/base/ChatOpenAI/with_structured_output).
