@@ -164,6 +164,43 @@ Use dedicated directories: path checks do not protect against concurrent hostile
 Automatic resume, caching, batch parallelism, and concurrent writes to one output directory
 are not supported. This is a hardened assignment CLI, not a certified production service.
 
+## Security risk: generated Rust is untrusted code
+
+A source file can contain a prompt-injection attempt asking the model to generate malicious
+Rust. The model may follow that instruction despite the prompt's defenses. Valid JSON,
+successful compilation, and passing behavior tests do **not** establish that generated code
+is safe: malicious behavior can coexist with correct results or activate only on untested inputs.
+
+The normal CLI compiles generated Rust without executing it. Differential evaluations do
+execute it, but both compilation and execution take place in restricted containers:
+
+- External networking is disabled; host directories and the Docker socket are not mounted.
+- API keys and the application's environment variables are not passed into the containers.
+- Processes run as an unprivileged user with capabilities dropped and privilege escalation disabled.
+- The filesystem is read-only except for a size-limited temporary directory.
+- Memory, CPU, process count, and wall-clock time are limited; cleanup is attempted afterward.
+
+These controls limit access to the host and secrets; they do not prohibit every operation.
+Code can still read files available inside its container and write to its temporary directory.
+Compiler inputs can also be hostile, which is why compilation itself must remain isolated.
+A crash, timeout, resource exhaustion, or failed cleanup remains possible.
+
+**Docker is not an absolute security boundary.** Containers share the Docker host's kernel;
+a kernel or container-runtime vulnerability could allow an escape. Do not run generated code
+directly on your workstation or in an environment containing credentials simply because a
+check passed. `--rust-backend local` bypasses compiler isolation and is for trusted code only;
+`--skip-rust-check` saves unverified output.
+
+For a service accepting arbitrary or deliberately hostile submissions, use stronger isolation:
+a disposable dedicated VM or microVM without credentials, host mounts, or access to external
+or internal networks, with enforced resource limits and destruction after each job.
+This is a recommended deployment improvement, **not implemented by this repository**.
+No execution environment provides a guarantee of zero risk.
+
+The model has no shell, filesystem, or network tools in this application. However, any secret
+already present in an input file will be sent to the API with that file; automatic input-secret
+scanning is not currently implemented. See [SECURITY.md](SECURITY.md) for the full trust model.
+
 ## LLM evaluations
 
 The dataset contains 30 analysis cases (20 development, 10 holdout) and five Rust behavior
