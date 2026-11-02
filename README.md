@@ -36,9 +36,12 @@ in `results.json`, and processing continues for other files.
 2. Ask the LLM for language, copyright holders, license name/category, and functions.
    Pydantic validates the response. Source code is supplied as JSON data separately
    from system instructions. Python AST and JavaScript Tree-sitter independently
-   verify function names and parameter counts; disagreement fails that file.
-   Verification for other languages is marked unsupported. Known licenses are
-   normalized, and conflicts with their known categories are rejected.
+   verify function names and parameter counts without trusting the model's language label.
+   Both parsers are tried; conflicting function lists or disagreement with the model fail
+   the file. If neither parser accepts the source, processing is unsupported and no action
+   is selected. Known licenses are normalized and category conflicts are rejected.
+   Names outside the supported license table (including `GPL-3.0`, `GPL-3.0+`, and `GPLv3`)
+   are unsupported regardless of the model's category; versions and later clauses are not guessed.
 3. Select the action in application code:
    - Permissive license: save function names and argument counts.
    - Copyleft license with more than two definitions: save function metadata.

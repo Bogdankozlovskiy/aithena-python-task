@@ -57,3 +57,24 @@ def extract_functions(source: str, language: str) -> list[Function] | None:
             stack.extend(reversed(node.named_children))
         return functions
     return None
+
+
+def detect_functions(source: str) -> list[Function] | None:
+    """Parse supported syntaxes independently of model-provided language labels.
+
+    When both parsers accept the input, their function lists must agree. Ambiguous
+    structural results fail closed; unsupported syntax never bypasses verification.
+    """
+    candidates = []
+    for language in ("Python", "JavaScript"):
+        try:
+            functions = extract_functions(source, language)
+        except (SyntaxError, ValueError):
+            continue
+        if functions is not None:
+            candidates.append(functions)
+    if not candidates:
+        return None
+    if any(functions != candidates[0] for functions in candidates[1:]):
+        raise ValueError("Source parsers disagree on function definitions")
+    return candidates[0]

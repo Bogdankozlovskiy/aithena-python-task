@@ -242,13 +242,13 @@ def test_utf8_bom_and_unicode_paths(dirs, backend):
     assert len(result.source_sha256) == 64
 
 
-def test_parser_success_and_unsupported_language(dirs, backend):
+def test_parser_verification_does_not_trust_language_label(dirs, backend):
     source, output = dirs
-    for language, status in [("Python", "passed"), ("Ruby", "unsupported")]:
+    for language in ["Python", "Ruby", "Python 3", "Node.js"]:
         backend.analyze.return_value = analysis(language=language)
         (result,) = process_directory(source, output, backend, verify_functions=True)
         assert result.status == "ok"
-        assert result.functions_validation == status
+        assert result.functions_validation == "passed"
 
 
 def test_rust_validator_injection_and_nested_output(dirs, backend):
