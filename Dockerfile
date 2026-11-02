@@ -11,6 +11,7 @@ WORKDIR /tmp
 FROM python:3.13-slim AS runtime
 RUN apt-get update && apt-get install -y --no-install-recommends rustc \
     && rm -rf /var/lib/apt/lists/*
+ENV AITHENA_CONTAINER=1
 WORKDIR /app
 COPY pyproject.toml uv.lock .python-version ./
 RUN pip install --no-cache-dir uv==0.11.8

@@ -6,6 +6,7 @@ from langchain_core.exceptions import OutputParserException
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, ValidationError
 
+from .input_safety import reject_credentials
 from .models import Analysis, RustSource
 from .prompts import CURRENT_VERSION, load_current_prompt
 
@@ -39,6 +40,8 @@ class LLMAnalyzer:
         self.calls: list[dict[str, Any]] = []
 
     def _invoke(self, schema: type[T], instruction: str, path: str, source: str) -> T:
+        reject_credentials(path)
+        reject_credentials(source)
         chain = self.model.with_structured_output(
             schema, method="json_schema", strict=True, include_raw=True
         )

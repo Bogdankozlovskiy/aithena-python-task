@@ -140,3 +140,33 @@ def probe():
 )
 def test_compilation_failure_or_early_exit_is_not_success(code):
     assert not rust_test(code, "assert_eq!(add(1,2),3);")["passed"]
+
+
+@pytest.mark.parametrize(
+    "case_id,count",
+    [
+        ("holdout_gcd", 200),
+        ("holdout_factorial", 21),
+        ("holdout_sign", 111),
+    ],
+)
+def test_frozen_holdout_inputs(case_id, count):
+    calls = diff.input_calls(case_id)
+    assert len(calls) == count
+    assert calls == diff.input_calls(case_id)
+
+
+@sandbox
+def test_holdout_reference_expectations():
+    cases = json.loads((Path(__file__).parents[1] / "evals/translation-holdout.json").read_text())[
+        "cases"
+    ]
+    expected = [
+        ("gcd", [-12, 18], 6),
+        ("factorial", [20], 2432902008176640000),
+        ("sign", [diff.MIN_I64], -1),
+    ]
+    for case, (function, args, value) in zip(cases, expected, strict=True):
+        assert diff.python_results(case["source"], [{"function": function, "args": args}]) == [
+            {"value": value}
+        ]

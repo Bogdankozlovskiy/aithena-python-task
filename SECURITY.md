@@ -60,3 +60,16 @@ Use a minimal redacted reproduction. Never commit `.env` files or upload credent
 inside evaluation artifacts.
 
 Reference: [OpenAI safety guidance](https://developers.openai.com/api/docs/guides/agent-builder-safety).
+
+
+## Input credential screening
+
+Before any model call, filenames and source text are checked for recognizable OpenAI,
+GitHub, AWS access-key IDs, private-key headers, and long quoted credential assignments.
+A match rejects the file without sending it to the API. Errors do not include matched text.
+This conservative screening can have false positives and does not detect every format,
+encoded secret, or confidential document. It is not permission to submit sensitive files.
+
+The application image requires an explicit local-compiler choice for trusted input, or
+an explicit request to skip validation. It never silently falls back from an unavailable
+Docker sandbox to compilation in the API client's environment.

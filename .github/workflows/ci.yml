@@ -31,6 +31,14 @@ jobs:
       - run: uv sync --frozen --python 3.13 --no-python-downloads
       - name: Verify Python runtime
         run: uv run python -c "import sys; assert sys.version_info[:2] == (3, 13); print(sys.version)"
+      - name: Installed wheel smoke test outside the source tree
+        run: |
+          uv build --wheel
+          uv venv --python 3.13 "$RUNNER_TEMP/wheel-env"
+          uv pip install --python "$RUNNER_TEMP/wheel-env/bin/python" dist/*.whl
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/wheel-env/bin/python" -c "from solution.prompts import load_current_prompt; assert load_current_prompt()['translate']"
+          "$RUNNER_TEMP/wheel-env/bin/python" -m solution --help
       - name: Ruff lint
         run: uv run ruff check solution tests scripts evals
       - name: Ruff format
@@ -112,6 +120,14 @@ jobs:
         env:
           RUN_SANDBOX_TESTS: '1'
         run: uv run python -m pytest tests/test_differential.py -q
+      - name: Application image requires explicit compiler choice
+        run: |
+          set +e
+          docker run --rm aithena-solution > image-startup.log 2>&1
+          status=$?
+          set -e
+          test "$status" -eq 2
+          grep -q 'explicitly use --rust-backend local' image-startup.log
       - name: Isolated Rust compiler smoke test
         run: |
           printf 'pub fn foo() {}' | docker run --rm -i --network=none --read-only \
@@ -182,6 +198,14 @@ jobs:
         run: >-
           uv run python -m evals.run --prompt-version current --settings temperature-zero
           --kind translation --repeats 3 --workers 3 --output ci-results/translation.json
+      - name: Independent translation holdout (3 cases x 3 repeats)
+        if: ${{ !cancelled() }}
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          LLM_MODEL: gpt-5.4-mini-2026-03-17
+        run: >-
+          uv run python -m evals.run --prompt-version current --kind translation
+          --split holdout --repeats 3 --workers 3 --output ci-results/translation-holdout.json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:

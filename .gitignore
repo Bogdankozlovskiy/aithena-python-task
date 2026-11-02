@@ -19,3 +19,5 @@ ci-results/
 *-coverage.json
 *junit.xml
 coverage.xml
+
+dist/

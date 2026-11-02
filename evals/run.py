@@ -185,7 +185,10 @@ def main() -> int:
     llm_module.ANALYZE = prompts["analyze"]
     llm_module.TRANSLATE = prompts["translate"]
     llm_module.PROMPT_VERSION = version
-    dataset_path = ROOT / ("security.json" if args.security else args.kind + ".json")
+    dataset_name = "security" if args.security else args.kind
+    if args.kind == "translation" and args.split == "holdout":
+        dataset_name = "translation-holdout"
+    dataset_path = ROOT / (dataset_name + ".json")
     dataset = json.loads(dataset_path.read_text())
     cases = [
         c

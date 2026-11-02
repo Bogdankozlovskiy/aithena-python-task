@@ -47,7 +47,17 @@ def input_calls(case_id: str) -> list[dict[str, Any]]:
     def add(function: str, *args: int) -> None:
         calls.append({"function": function, "args": list(args)})
 
-    if case_id == "add":
+    if case_id == "holdout_gcd":
+        for a, b in pairs:
+            if a != MIN_I64 and b != MIN_I64:
+                add("gcd", a, b)
+    elif case_id == "holdout_factorial":
+        for n in range(21):
+            add("factorial", n)
+    elif case_id == "holdout_sign":
+        for n in edges + [rng.randint(MIN_I64, MAX_I64) for _ in range(100)]:
+            add("sign", n)
+    elif case_id == "add":
         for a, b in pairs:
             if MIN_I64 <= a + b <= MAX_I64:
                 add("add", a, b)

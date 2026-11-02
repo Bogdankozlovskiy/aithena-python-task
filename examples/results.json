@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "results": [
     {
       "path": "1.py",
@@ -25,7 +25,9 @@
       "action": "translate_to_rust",
       "rust_path": "rust/1.py.rs",
       "rust_validation": "skipped",
-      "error": null
+      "error": null,
+      "source_sha256": "602e23a71e003cd08058d3ce84c0b6e3df8e2ba59543289ecca5f642d213638c",
+      "functions_validation": "passed"
     },
     {
       "path": "2.py",
@@ -63,7 +65,9 @@
       "action": "extract_functions",
       "rust_path": null,
       "rust_validation": null,
-      "error": null
+      "error": null,
+      "source_sha256": "ec6bad24b9a146cff248db2ab7ddda39906011a82fb368b391e46ee512b32fd2",
+      "functions_validation": "passed"
     },
     {
       "path": "3.py",
@@ -85,7 +89,10 @@
       "action": "extract_functions",
       "rust_path": null,
       "rust_validation": null,
-      "error": null
+      "error": null,
+      "source_sha256": "8e2f27a24b5580d3239c71a3970f57ca0ba402bb2e91068486a644e2cb529a62",
+      "functions_validation": "passed"
     }
-  ]
+  ],
+  "updated_at": "2026-11-02T00:00:00+00:00"
 }
