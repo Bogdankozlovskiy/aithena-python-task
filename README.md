@@ -144,8 +144,8 @@ docker run --rm --user "$(id -u):$(id -g)" \
   При обрыве соединения провайдер может не вернуть usage; такие расходы неизвестны.
 - Ошибки провайдера сохраняются без тела ответа, ошибки схемы — без исходных данных.
 - `.github/workflows/ci.yml` проверяет Python 3.11–3.13, стиль, тесты и Docker-сборки.
-  Workflow подготовлен; запуск в GitHub требует помещения проекта в репозиторий.
-- `live-results/` содержит настоящий API-прогон трёх файлов, а `examples/` — старый
+  Workflow опубликован в GitHub; см. раздел GitHub CI.
+- `live-results/` (локальный каталог, исключён из Git) содержит настоящий API-прогон трёх файлов, а `examples/` — старый
   иллюстративный результат с mock-ответами. Ключи в артефакты не включаются.
 
 ## Границы production-готовности
@@ -184,11 +184,11 @@ CI требует **не менее 95% строк и отдельно 95% ве�
 попадают в отчёт как ошибки. Изоляция Rust и дополнительные проверки путей не гарантируют
 защиту от одновременной враждебной модификации директорий: используйте выделенные каталоги.
 
-Последнее измерение (2026-11-02): **100.00% строк**, **98.72% ветвлений**,
-**99.72% общий показатель**. На Python 3.11, 3.12 и 3.13:
+Последнее измерение (2026-11-02): **99.64% строк**, **98.72% ветвлений**,
+**99.44% общий показатель**. На Python 3.11, 3.12 и 3.13:
 по 138 тестов прошли, 2 пропущены; live API-тест отдельно прошёл.
-Одна непокрытая дуга — недостижимый выход из цикла ограниченных повторов.
-HTML-отчёт приложен в архиве в каталоге `coverage-report/`.
+Непокрыты недостижимый выход из цикла повторов и защитный RuntimeError после него.
+HTML-отчёт доступен в артефактах GitHub Actions и в ZIP-архиве проекта.
 
 ## LLM evaluations and prompts v2
 
@@ -228,3 +228,9 @@ uv run mypy
 uv run flake8 solution tests scripts evals
 uv run bandit -r solution scripts evals -q
 ```
+
+Branch protection limitation: GitHub rejected required-check enforcement for this private
+repository with HTTP 403 (GitHub Pro or public visibility required). The workflow runs
+and reports failures, but GitHub does not currently block merges on failed checks.
+After upgrading, require the `CI required` check on `main` with up-to-date branches.
+The repository remains private.
