@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "results": [
+    {
+      "path": "1.py",
+      "status": "ok",
+      "analysis": {
+        "language": "Python",
+        "copyright_holders": [
+          "Elon Musk"
+        ],
+        "license_name": "GPL-3.0-or-later",
+        "license_category": "copyleft",
+        "functions": [
+          {
+            "name": "foo",
+            "argument_count": 0
+          },
+          {
+            "name": "bar",
+            "argument_count": 0
+          }
+        ]
+      },
+      "action": "translate_to_rust",
+      "rust_path": "rust/1.py.rs",
+      "rust_validation": "skipped",
+      "error": null
+    },
+    {
+      "path": "2.py",
+      "status": "ok",
+      "analysis": {
+        "language": "Python",
+        "copyright_holders": [
+          "Guido Musk"
+        ],
+        "license_name": "GPL-3.0-or-later",
+        "license_category": "copyleft",
+        "functions": [
+          {
+            "name": "foo",
+            "argument_count": 3
+          },
+          {
+            "name": "bar",
+            "argument_count": 1
+          },
+          {
+            "name": "foo1",
+            "argument_count": 1
+          },
+          {
+            "name": "bar1",
+            "argument_count": 1
+          },
+          {
+            "name": "bar1",
+            "argument_count": 1
+          }
+        ]
+      },
+      "action": "extract_functions",
+      "rust_path": null,
+      "rust_validation": null,
+      "error": null
+    },
+    {
+      "path": "3.py",
+      "status": "ok",
+      "analysis": {
+        "language": "JavaScript",
+        "copyright_holders": [
+          "Brendan Eich"
+        ],
+        "license_name": "MIT",
+        "license_category": "permissive",
+        "functions": [
+          {
+            "name": "hello",
+            "argument_count": 1
+          }
+        ]
+      },
+      "action": "extract_functions",
+      "rust_path": null,
+      "rust_validation": null,
+      "error": null
+    }
+  ]
+}

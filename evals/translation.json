@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "add",
+      "source": "# SPDX-License-Identifier: GPL-3.0-or-later\n# Copyright (c) 2026 Ada Example\ndef add(a: int, b: int) -> int:\n    return a+b\n",
+      "tests": "assert_eq!(add(2, 3), 5); assert_eq!(add(-7, 3), -4); assert_eq!(add(0,0),0);"
+    },
+    {
+      "id": "floor_mod",
+      "source": "# SPDX-License-Identifier: GPL-3.0-or-later\n# Copyright (c) 2026 Ada Example\ndef floor_div(a: int, b: int) -> int:\n    return a // b\n\ndef remainder(a: int, b: int) -> int:\n    return a % b\n",
+      "tests": "for (a,b,q,r) in [(7,3,2,1),(-7,3,-3,2),(7,-3,-3,-2),(-7,-3,2,-1),(0,3,0,0)] { assert_eq!(floor_div(a,b),q); assert_eq!(remainder(a,b),r); }"
+    },
+    {
+      "id": "clamp",
+      "source": "# SPDX-License-Identifier: GPL-3.0-or-later\n# Copyright (c) 2026 Ada Example\ndef clamp(n: int, low: int, high: int) -> int:\n    return min(max(n, low), high)\n",
+      "tests": "assert_eq!(clamp(-5,0,10),0); assert_eq!(clamp(20,0,10),10); assert_eq!(clamp(5,0,10),5); assert_eq!(clamp(0,0,0),0);"
+    },
+    {
+      "id": "range_sum",
+      "source": "# SPDX-License-Identifier: GPL-3.0-or-later\n# Copyright (c) 2026 Ada Example\ndef total(n: int) -> int:\n    result = 0\n    for i in range(n):\n        result += i\n    return result\n",
+      "tests": "assert_eq!(total(-3),0); assert_eq!(total(0),0); assert_eq!(total(1),0); assert_eq!(total(5),10);"
+    },
+    {
+      "id": "absolute",
+      "source": "# SPDX-License-Identifier: GPL-3.0-or-later\n# Copyright (c) 2026 Ada Example\ndef absolute(n: int) -> int:\n    if n < 0:\n        return -n\n    return n\n",
+      "tests": "assert_eq!(absolute(-9),9); assert_eq!(absolute(9),9); assert_eq!(absolute(0),0);"
+    }
+  ]
+}

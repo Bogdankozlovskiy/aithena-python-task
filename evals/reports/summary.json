@@ -1,0 +1,116 @@
+{
+  "model": "gpt-5.4-mini-2026-03-17",
+  "dataset": {
+    "analysis_cases": 30,
+    "dev": 20,
+    "holdout": 10,
+    "translation_cases": 5
+  },
+  "experiments": [
+    {
+      "experiment": "baseline-analysis",
+      "passed": 38,
+      "total": 40,
+      "exactly_repeatable_cases": 20,
+      "repeated_cases": 20,
+      "input_tokens": 17916,
+      "output_tokens": 2142,
+      "estimated_usd_no_cache_discount": 0.023076,
+      "failed_cases": [
+        "dual_expression"
+      ],
+      "raw_repeatable_cases": 20
+    },
+    {
+      "experiment": "baseline-translation",
+      "passed": 8,
+      "total": 10,
+      "exactly_repeatable_cases": 2,
+      "repeated_cases": 5,
+      "input_tokens": 2198,
+      "output_tokens": 789,
+      "estimated_usd_no_cache_discount": 0.005199,
+      "failed_cases": [
+        "floor_mod"
+      ]
+    },
+    {
+      "experiment": "v2-analysis-default",
+      "passed": 39,
+      "total": 40,
+      "exactly_repeatable_cases": 19,
+      "repeated_cases": 20,
+      "input_tokens": 33476,
+      "output_tokens": 2063,
+      "estimated_usd_no_cache_discount": 0.0343905,
+      "failed_cases": [
+        "javascript_patterns"
+      ],
+      "raw_repeatable_cases": 19
+    },
+    {
+      "experiment": "v2-translation-default",
+      "passed": 15,
+      "total": 15,
+      "exactly_repeatable_cases": 1,
+      "repeated_cases": 5,
+      "input_tokens": 7362,
+      "output_tokens": 1405,
+      "estimated_usd_no_cache_discount": 0.011844,
+      "failed_cases": []
+    },
+    {
+      "experiment": "v2-analysis-temperature-zero-dev",
+      "passed": 60,
+      "total": 60,
+      "exactly_repeatable_cases": 20,
+      "repeated_cases": 20,
+      "input_tokens": 50214,
+      "output_tokens": 3096,
+      "estimated_usd_no_cache_discount": 0.0515925,
+      "failed_cases": [],
+      "raw_repeatable_cases": 20
+    },
+    {
+      "experiment": "v2-translation-temperature-zero",
+      "passed": 15,
+      "total": 15,
+      "exactly_repeatable_cases": 4,
+      "repeated_cases": 5,
+      "input_tokens": 7362,
+      "output_tokens": 1432,
+      "estimated_usd_no_cache_discount": 0.0119655,
+      "failed_cases": []
+    },
+    {
+      "experiment": "v2-analysis-temperature-zero-holdout",
+      "passed": 30,
+      "total": 30,
+      "exactly_repeatable_cases": 10,
+      "repeated_cases": 10,
+      "input_tokens": 24411,
+      "output_tokens": 1407,
+      "estimated_usd_no_cache_discount": 0.02463975,
+      "failed_cases": [],
+      "raw_repeatable_cases": 10
+    }
+  ],
+  "total_calls": 210,
+  "estimated_usd_no_cache_discount": 0.16270724999999997,
+  "selected": {
+    "prompt": "v2",
+    "temperature": 0,
+    "reasoning_effort": "none",
+    "analysis_correct": 90,
+    "analysis_total": 90,
+    "translation_correct": 15,
+    "translation_total": 15
+  },
+  "limits": [
+    "No guarantee of deterministic model generation",
+    "Small mostly synthetic dataset, correlated repeated requests",
+    "Translation domain: bounded signed i64 integers; no arbitrary Python equivalence guarantee",
+    "Holdout outcomes were not used to revise prompts",
+    "All listed runs, including failed baseline results, retained"
+  ]
+}
