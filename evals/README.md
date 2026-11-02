@@ -140,7 +140,8 @@ minimum divided by -1 (including remainder, whose Rust intermediate quotient ove
 Range inputs are capped at 1,000 for execution time; negative inputs include i64 minimum.
 Clamp tests use ordered bounds. Division by zero is checked as Python ZeroDivisionError
 versus Rust panic, not as identical exception types. This is a bounded equivalence check,
-not proof of full Python semantics. The model never receives the test inputs or outputs.
+not proof of full Python semantics. Evaluation harnesses and generated input batches are not included in model requests;
+the translation prompt itself contains illustrative semantic examples.
 
 Reports record the input-generation seed, runner hash, dataset hash, and number of comparisons.
 Offline Docker CI tests both correct hand-authored Rust and deliberately wrong translations;

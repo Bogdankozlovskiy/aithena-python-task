@@ -204,7 +204,10 @@ This is a recommended deployment improvement, **not implemented by this reposito
 No execution environment provides a guarantee of zero risk.
 
 The model has no shell, filesystem, or network tools in this application. Input-secret
-screening rejects recognizable credentials before submission, but cannot detect every secret.
+screening rejects recognizable credentials and credential-label assignments before submission.
+The whole file is rejected; values are not truncated or submitted in partially hidden form.
+Labels followed by `=` or `:` also reject empty values, placeholders, and comments.
+This heuristic can reject harmless code and cannot detect every secret.
 Anything it misses will be sent to the API with the source. Do not submit sensitive files.
 See [SECURITY.md](../SECURITY.md) for the full trust model.
 

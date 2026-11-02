@@ -7,7 +7,10 @@ from pydantic import ValidationError
 
 
 def safe_error(exc: Exception) -> str:
-    """Never serialize provider response bodies, prompts or credential values."""
+    """Omit known provider/schema details; redact the configured key and sk- patterns.
+
+    Other exception text is truncated, not comprehensively scrubbed of secrets.
+    """
     if isinstance(exc, APIStatusError):
         return f"Provider HTTP {exc.status_code}; check credentials, balance and rate limits"
     if isinstance(exc, (APITimeoutError, APIConnectionError)):

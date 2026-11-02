@@ -65,11 +65,33 @@ Reference: [OpenAI safety guidance](https://developers.openai.com/api/docs/guide
 ## Input credential screening
 
 Before any model call, filenames and source text are checked for recognizable OpenAI,
-GitHub, AWS access-key IDs, private-key headers, and long quoted credential assignments.
-A match rejects the file without sending it to the API. Errors do not include matched text.
+GitHub, AWS access-key IDs, private-key headers, and credential-label assignments.
+A match rejects the file without sending it to the API. Screening errors do not include matched text.
 This conservative screening can have false positives and does not detect every format,
 encoded secret, or confidential document. It is not permission to submit sensitive files.
 
 The application image requires an explicit local-compiler choice for trusted input, or
 an explicit request to skip validation. It never silently falls back from an unavailable
 Docker sandbox to compilation in the API client's environment.
+
+## Credential-label rejection
+
+Case-insensitive labels followed by `=` or `:` reject the entire input before a model
+request is constructed. Supported labels include `login`, `username`, `user`, `pwd`,
+`password`, `passwd`, `passphrase`, `pass`, `apikey`/`api_key`/`api-key`,
+`accesstoken`/`access_token`/`access-token`, `token`,
+`clientsecret`/`client_secret`/`client-secret`, `secret`, and the Russian words for
+login and password. Quoted keys such as `"password":` are recognized too.
+
+No value boundary is inferred, no prefix is cut off, and no sanitized source is sent.
+Empty assignments, placeholders, comments, and type annotations also trigger rejection;
+these deliberate false positives avoid guessing whether a value is sensitive.
+Checks run in both the file pipeline and the API adapter, for filenames and source text.
+The pipeline reports an error and continues with other files; a blocked filename is
+replaced with `[redacted filename]` in the report. Input files on disk are unchanged.
+
+This remains heuristic screening, not a full format parser or a DLP guarantee. Other labels,
+encoded values, and confidential prose may not match. Error messages for this rejection
+are fixed and do not contain the matched input. General error sanitization is narrower:
+known provider/schema errors omit details; other exception messages redact the configured
+OpenAI key and `sk-` patterns, but are not guaranteed to scrub every possible secret.

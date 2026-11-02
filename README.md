@@ -16,7 +16,8 @@ uv run python -m solution --input data --output outputs
 ```
 
 The CLI loads `.env`; existing environment variables take precedence. Input is sent to the API.
-Recognizable credentials in filenames/source are rejected before submission, but screening is not exhaustive.
+Recognizable credentials and credential labels followed by `=` or `:` reject the entire file.
+No partial value is sent; screening is heuristic and can miss secrets or reject harmless examples.
 Use `--help` for options and [detailed usage](docs/usage.md) for Docker and configuration examples.
 The application image requires an explicit `--rust-backend local` choice for trusted inputs;
 it never silently falls back from isolated validation to a local compiler.
